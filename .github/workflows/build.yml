@@ -78,3 +78,35 @@ jobs:
             ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.uf2
             ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.bin
             ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.hex
+
+  # Tag pushes publish the flashable images. Only UF2 is attached: it is the one
+  # format a user can drag onto a board without tooling, and the provisioner is
+  # the only thing here anyone needs to flash by hand. The examples build to hex
+  # and bin and stay as run artefacts.
+  release:
+    name: release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      # Named after the artefact that produced it: firmware.uf2 says nothing on
+      # a release page.
+      - name: Collect the UF2 images
+        run: |
+          mkdir -p release
+          find artifacts -name '*.uf2' -print0 | while IFS= read -r -d '' f; do
+            cp "$f" "release/$(basename "$(dirname "$f")").uf2"
+          done
+          ls -l release
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: release/*.uf2
+          fail_on_unmatched_files: true
+          generate_release_notes: true
