@@ -1,0 +1,80 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # The library itself has no cross-compile env: an Arduino env needs a sketch to
+  # link and a library has none. These run the unit suite instead, once with every
+  # mode and once with only the set Meshtastic ships.
+  test:
+    name: test ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [native, native-meshtastic-modes]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('**/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - run: pip install --upgrade platformio
+      - run: pio test -e ${{ matrix.env }}
+
+  # Everything that produces a flashable image. The consumers are the examples and
+  # the one-shot codebook provisioner.
+  build:
+    name: build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: example-nrf52840
+            dir: examples
+            env: nrf52840
+          - name: example-esp32s3
+            dir: examples
+            env: esp32s3
+          - name: codebook-flash-t-echo-card
+            dir: tools/nrf52_codebook_flash
+            env: t-echo-card
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ matrix.env }}-${{ hashFiles('**/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-${{ matrix.env }}-
+      - run: pip install --upgrade platformio
+
+      # Generated, not committed, so it always matches the tables in src/.
+      - name: Generate the codebook blob
+        if: matrix.name == 'codebook-flash-t-echo-card'
+        run: python tools/make_codebook_blob.py src tools/nrf52_codebook_flash/src/codebook_blob.h --c-array
+
+      - name: Build
+        run: pio run -e ${{ matrix.env }}
+        working-directory: ${{ matrix.dir }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.uf2
+            ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.bin
+            ${{ matrix.dir }}/.pio/build/${{ matrix.env }}/*.hex

@@ -1,0 +1,4 @@
+.pio/
+examples/.pio/
+tools/nrf52_codebook_flash/.pio/
+tools/nrf52_codebook_flash/src/codebook_blob.h
