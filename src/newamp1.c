@@ -39,7 +39,6 @@
 #include "quantise.h"
 #include "mbest.h"
 #include "newamp1.h"
-#include "codec2_prof.h"
 #include "codebook_q8.h"
 
 /*---------------------------------------------------------------------------*\
@@ -475,9 +474,7 @@ void newamp1_model_to_indexes(C2CONST *c2const,
     int k;
 
     /* convert variable rate L to fixed rate K */
-    C2PROF_BEGIN(2);
     resample_const_rate_f(c2const, model, rate_K_vec, rate_K_sample_freqs_kHz, K);
-    C2PROF_END(2);
 
     /* remove mean */
     float sum = 0.0;
@@ -491,9 +488,7 @@ void newamp1_model_to_indexes(C2CONST *c2const,
     newamp1_eq(rate_K_vec_no_mean, eq, K, eq_en);
  
     /* two stage VQ */
-    C2PROF_BEGIN(3);
     rate_K_mbest_encode(indexes, rate_K_vec_no_mean, rate_K_vec_no_mean_, K, NEWAMP1_VQ_MBEST_DEPTH);
-    C2PROF_END(3);
 
     /* running sum of squared error for variance calculation */
     for(k=0; k<K; k++)
@@ -502,14 +497,12 @@ void newamp1_model_to_indexes(C2CONST *c2const,
     /* scalar quantise mean (effectively the frame energy) */
     float w[1] = {1.0};
     float se_mean;
-    C2PROF_BEGIN(4);
     indexes[2] = quantise(newamp1_energy_cb[0].cb, 
                           mean, 
                           w, 
                           newamp1_energy_cb[0].k, 
                           newamp1_energy_cb[0].m, 
                           &se_mean);
-    C2PROF_END(4);
 
     /* scalar quantise Wo.  We steal the smallest Wo index to signal
        an unvoiced frame */
