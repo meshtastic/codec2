@@ -25,6 +25,9 @@
   "headers": "codec2.h",
   "build": {
     "srcDir": "src",
-    "includeDir": "src"
+    "includeDir": "src",
+    "flags": [
+      "-fsingle-precision-constant"
+    ]
   }
 }

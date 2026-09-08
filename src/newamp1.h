@@ -33,7 +33,12 @@
 #define NEWAMP1_N_INDEXES    4   /* Number of indexes to pack: vq1, vq2, energy, Wo */
 #define NEWAMP1_PHASE_NFFT 128   /* size of FFT used for phase synthesis            */
 #define NEWAMP1_K           20   /* rate K vector length                            */
-#define NEWAMP1_VQ_MBEST_DEPTH 5 /* how many candidates we keep for each stage of mbest search */
+/* How many candidates each mbest stage keeps. Stage two runs one full 512
+   entry search per survivor, so the codebook walked per frame is
+   (1 + depth) * 512 vectors and the cost is close to linear in depth. */
+#ifndef NEWAMP1_VQ_MBEST_DEPTH
+#define NEWAMP1_VQ_MBEST_DEPTH 5
+#endif
 
 
 #include "codec2_fft.h"

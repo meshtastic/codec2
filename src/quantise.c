@@ -34,6 +34,7 @@
 #include "defines.h"
 #include "dump.h"
 #include "quantise.h"
+#include "fastpow.h"
 #include "lpc.h"
 #include "lsp.h"
 #include "codec2_fft.h"
@@ -431,7 +432,7 @@ void lpc_post_filter(codec2_fftr_cfg fftr_fwd_cfg, float Pw[], float ak[],
 
     e_after = 1E-4;
     for(i=0; i<FFT_ENC/2; i++) {
-        Pfw = powf(Rw[i], beta);
+        Pfw = CODEC2_POWF(Rw[i], beta);
         Pw[i] *= Pfw * Pfw;
         e_after += Pw[i];
     }

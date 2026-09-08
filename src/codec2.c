@@ -47,6 +47,7 @@
 #include "lsp.h"
 #include "newamp2.h"
 #include "codec2_internal.h"
+#include "codec2_prof.h"
 #include "machdep.h"
 #include "bpf.h"
 #include "bpfb.h"
@@ -1561,14 +1562,17 @@ void codec2_encode_700c(struct CODEC2 *c2, unsigned char * bits, short speech[])
 
     memset(bits, '\0',  ((codec2_bits_per_frame(c2) + 7) / 8));
 
+    C2PROF_BEGIN(0);
     for(i=0; i<M; i++) {
         analyse_one_frame(c2, &model, &speech[i*c2->n_samp]);
     }
+    C2PROF_END(0);
 
     int K = 20;
     float rate_K_vec[K], mean;
     float rate_K_vec_no_mean[K], rate_K_vec_no_mean_[K];
 
+    C2PROF_BEGIN(1);
     newamp1_model_to_indexes(&c2->c2const, 
                              indexes, 
                              &model, 
@@ -1578,6 +1582,7 @@ void codec2_encode_700c(struct CODEC2 *c2, unsigned char * bits, short speech[])
                              &mean,
                              rate_K_vec_no_mean,
                              rate_K_vec_no_mean_, &c2->se, c2->eq, c2->eq_en);
+    C2PROF_END(1);
     c2->nse += K;
 
 #ifndef CORTEX_M4

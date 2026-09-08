@@ -1,6 +1,7 @@
 #ifndef __CODEBOOK_Q8__
 #define __CODEBOOK_Q8__
 
+#include <stddef.h> /* NULL, used by the external-codebook declarations */
 #include <stdint.h>
 
 /* The newamp1 and newamp2 VQ codebooks are mel-band amplitudes in dB, which
